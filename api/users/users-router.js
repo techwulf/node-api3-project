@@ -3,7 +3,6 @@ const express = require('express');
 const {
   validateUserId, validateUser, validatePost
 } = require('../middleware/middleware');
-
 const User = require('./users-model');
 const Post = require('../posts/posts-model');
 
@@ -25,37 +24,48 @@ router.get('/:id', validateUserId, (req, res, next) => {
     .catch(next);
 });
 
-router.post('/', validateUser, (req, res) => {
-  // RETURN THE NEWLY CREATED USER OBJECT
-  // this needs a middleware to check that the request body is valid
-  res.status(300);
+router.post('/', validateUser, (req, res, next) => {
+  User.insert(req.body)
+    .then(user => {
+      res.status(201).json(user);
+    })
+    .catch(next);
 });
 
-router.put('/:id', [validateUserId, validateUser], (req, res) => {
-  // RETURN THE FRESHLY UPDATED USER OBJECT
-  // this needs a middleware to verify user id
-  // and another middleware to check that the request body is valid
-  res.status(300);
+router.put('/:id', [validateUserId, validateUser], (req, res, next) => {
+  User.update(req.params.id, req.body)
+    .then(user => {
+      res.status(201).json(user);
+    })
+    .catch(next);
 });
 
-router.delete('/:id', validateUserId, (req, res) => {
-  // RETURN THE FRESHLY DELETED USER OBJECT
-  // this needs a middleware to verify user id
-  res.status(300);
+router.delete('/:id', validateUserId, (req, res, next) => {
+  User.remove(req.params.id)
+    .then(() => {
+      res.status(201).json(req.user);
+    })
+    .catch(next);
 });
 
-router.get('/:id/posts', validateUserId, (req, res) => {
-  // RETURN THE ARRAY OF USER POSTS
-  // this needs a middleware to verify user id
-  res.status(300);
+router.get('/:id/posts', validateUserId, (req, res, next) => {
+  Post.get()
+    .then(posts => {
+      const userPosts = posts.filter(post => 
+        parseInt(req.params.id) === post.user_id
+      );
+      res.status(201).json(userPosts);
+    })
+    .catch(next);
 });
 
-router.post('/:id/posts', [validateUserId, validatePost], (req, res) => {
-  // RETURN THE NEWLY CREATED USER POST
-  // this needs a middleware to verify user id
-  // and another middleware to check that the request body is valid
-  res.status(300);
+router.post('/:id/posts', [validateUserId, validatePost], (req, res, next) => {
+  const postInfo = {...req.body, user_id: req.params.id};
+  Post.insert(postInfo)
+    .then(post => {
+      res.status(201).json(post);
+    })
+    .catch(next);
 });
 
-// do not forget to export the router
 module.exports = router;
